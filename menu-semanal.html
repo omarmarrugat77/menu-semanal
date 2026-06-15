@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menú Semanal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --earth:   #2C2416;
+    --bark:    #4A3728;
+    --moss:    #5C6B3A;
+    --gold:    #C8923A;
+    --sand:    #E8D5B0;
+    --cream:   #F5EFE0;
+    --white:   #FDFAF4;
+    --mid:     #8A7B6A;
+    --light:   #D4C4A8;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--cream);
+    color: var(--earth);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--earth);
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 6px,
+      rgba(200,146,58,0.06) 6px,
+      rgba(200,146,58,0.06) 7px
+    );
+  }
+
+  .header-inner { position: relative; z-index: 1; }
+
+  .header-tag {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--earth);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2px;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    color: var(--sand);
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+  }
+
+  .header-sub {
+    color: var(--mid);
+    font-size: 0.8rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+  }
+
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1rem;
+    background: var(--bark);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--sand);
+    letter-spacing: 0.04em;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-almuerzo { background: var(--gold); }
+  .dot-comida   { background: var(--moss); }
+  .dot-cena     { background: #7A8FA6; }
+  .dot-ayuno    { background: var(--mid); }
+
+  .week-nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 0;
+    background: var(--bark);
+    border-bottom: 2px solid var(--gold);
+    scrollbar-width: none;
+  }
+  .week-nav::-webkit-scrollbar { display: none; }
+
+  .day-tab {
+    flex-shrink: 0;
+    padding: 0.6rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--light);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+
+  .day-tab:hover { color: var(--sand); }
+  .day-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  main { padding: 1.25rem 1rem 3rem; max-width: 680px; margin: 0 auto; }
+
+  .day-card { display: none; animation: fadeIn 0.25s ease; }
+  .day-card.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--light);
+  }
+
+  .day-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--bark);
+  }
+
+  .day-type {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--mid);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .meal-block {
+    background: var(--white);
+    border-radius: 8px;
+    margin-bottom: 0.8rem;
+    overflow: hidden;
+    border: 1px solid var(--light);
+  }
+
+  .meal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.9rem;
+  }
+
+  .meal-stripe {
+    width: 4px;
+    height: 1.8rem;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .stripe-almuerzo { background: var(--gold); }
+  .stripe-comida   { background: var(--moss); }
+  .stripe-cena     { background: #7A8FA6; }
+  .stripe-ayuno    { background: var(--mid); }
+
+  .meal-time {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mid);
+  }
+
+  .meal-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--bark);
+  }
+
+  .meal-body {
+    padding: 0 0.9rem 0.8rem 2.4rem;
+  }
+
+  .meal-main {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--earth);
+    line-height: 1.4;
+    margin-bottom: 0.3rem;
+  }
+
+  .meal-detail {
+    font-size: 0.78rem;
+    color: var(--mid);
+    line-height: 1.5;
+  }
+
+  .meal-detail span {
+    display: inline-block;
+    margin-right: 0.5rem;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.1rem 0.45rem;
+    border-radius: 20px;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+  .tag-prot  { background: #FFF0DC; color: #B06000; }
+  .tag-grasa { background: #EFF5E8; color: #3D5C1A; }
+  .tag-carb  { background: #E8F0F8; color: #2A5080; }
+
+  .ayuno-block {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px dashed var(--light);
+    margin-bottom: 0.8rem;
+  }
+
+  .ayuno-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .ayuno-text {
+    font-size: 0.8rem;
+    color: var(--mid);
+    line-height: 1.4;
+  }
+
+  .ayuno-text strong {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 0.1rem;
+  }
+
+  .tip-bar {
+    background: linear-gradient(135deg, var(--bark) 0%, var(--earth) 100%);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    margin-top: 1.2rem;
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+
+  .tip-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+  .tip-text {
+    font-size: 0.78rem;
+    color: var(--sand);
+    line-height: 1.5;
+  }
+
+  .tip-text strong { color: var(--gold); }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.68rem;
+    color: var(--mid);
+    letter-spacing: 0.06em;
+    border-top: 1px solid var(--light);
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-tag">Alimentación Evolutiva</div>
+    <h1>Menú Semanal</h1>
+    <p class="header-sub">Brigada de reg · Ayuno nocturno · Dos ingestas principales</p>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot dot-almuerzo"></div> Almuerzo ~10h</div>
+  <div class="legend-item"><div class="dot dot-comida"></div> Comida ~17h</div>
+  <div class="legend-item"><div class="dot dot-cena"></div> Cena ligera</div>
+  <div class="legend-item"><div class="dot dot-ayuno"></div> Ayuno nocturno</div>
+</div>
+
+<div class="week-nav">
+  <button class="day-tab active" onclick="showDay('lun',this)">LUN</button>
+  <button class="day-tab" onclick="showDay('mar',this)">MAR</button>
+  <button class="day-tab" onclick="showDay('mie',this)">MIÉ</button>
+  <button class="day-tab" onclick="showDay('jue',this)">JUE</button>
+  <button class="day-tab" onclick="showDay('vie',this)">VIE</button>
+  <button class="day-tab" onclick="showDay('sab',this)">SÁB</button>
+  <button class="day-tab" onclick="showDay('dom',this)">DOM</button>
+</div>
+
+<main>
+
+  <!-- LUNES -->
+  <div class="day-card active" id="day-lun">
+    <div class="day-header">
+      <span class="day-name">Lunes</span>
+      <span class="day-type">Jornada laboral · Ayuno nocturno</span>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-almuerzo"></div>
+        <div>
+          <div class="meal-time">~10:00h · Almuerzo</div>
+          <div class="meal-label">Huevos con jamón y aguacate</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">3 huevos revueltos con jamón serrano, medio aguacate y tomate cherry</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-grasa">Grasa buena</span>
+          · Añade aceite de oliva virgen extra · Puñado de nueces si tienes hambre
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-comida"></div>
+        <div>
+          <div class="meal-time">~17:00h · Comida</div>
+          <div class="meal-label">Pollo asado con verduras de temporada</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Muslos de pollo al horno con pimiento, calabacín y cebolla asada</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          · Aliña con ajo, romero y AOVE · Fruta de temporada de postre
+        </div>
+      </div>
+    </div>
+
+    <div class="ayuno-block">
+      <div class="ayuno-icon">🌙</div>
+      <div class="ayuno-text">
+        <strong>Noche · Ayuno</strong>
+        Sin ingesta hasta el almuerzo del día siguiente
+      </div>
+    </div>
+
+    <div class="tip-bar">
+      <div class="tip-icon">💧</div>
+      <div class="tip-text"><strong>Hidratación campo:</strong> Mínimo 2L de agua durante la jornada. Con calor, añade una pizca de sal al agua o toma caldo.</div>
+    </div>
+  </div>
+
+  <!-- MARTES -->
+  <div class="day-card" id="day-mar">
+    <div class="day-header">
+      <span class="day-name">Martes</span>
+      <span class="day-type">Jornada laboral · Ayuno nocturno</span>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-almuerzo"></div>
+        <div>
+          <div class="meal-time">~10:00h · Almuerzo</div>
+          <div class="meal-label">Sardinas o atún con ensalada</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Lata de sardinas al AOVE o atún, con lechuga, tomate y olivas negras</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-grasa">Omega-3</span>
+          · Aliña con limón y AOVE · Fácil de transportar al trabajo
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-comida"></div>
+        <div>
+          <div class="meal-time">~17:00h · Comida</div>
+          <div class="meal-label">Ternera con boniato y espinacas</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Filete de ternera a la plancha, boniato cocido y salteado de espinacas con ajo</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-carb">Carbohidrato</span>
+          · El boniato da energía sin pico de glucosa · Puñado de frutos secos al final
+        </div>
+      </div>
+    </div>
+
+    <div class="ayuno-block">
+      <div class="ayuno-icon">🌙</div>
+      <div class="ayuno-text">
+        <strong>Noche · Ayuno</strong>
+        Si tienes hambre real: infusión o caldo de huesos sin nada más
+      </div>
+    </div>
+  </div>
+
+  <!-- MIÉRCOLES -->
+  <div class="day-card" id="day-mie">
+    <div class="day-header">
+      <span class="day-name">Miércoles</span>
+      <span class="day-type">Jornada laboral · Ayuno nocturno</span>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-almuerzo"></div>
+        <div>
+          <div class="meal-time">~10:00h · Almuerzo</div>
+          <div class="meal-label">Tortilla de verduras</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Tortilla de 3 huevos con pimiento, cebolla y champiñones. Aceitunas al lado.</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-grasa">Grasa buena</span>
+          · Se puede preparar la noche anterior · Fácil de llevar en tupper
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-comida"></div>
+        <div>
+          <div class="meal-time">~17:00h · Comida</div>
+          <div class="meal-label">Salmón con ensalada de algas o verde</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Salmón al horno o plancha con ensalada grande: pepino, aguacate, canónigos, semillas</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-grasa">Omega-3</span>
+          · Día de menos carbohidrato · Fruta o yogur natural al final si quieres
+        </div>
+      </div>
+    </div>
+
+    <div class="ayuno-block">
+      <div class="ayuno-icon">🌙</div>
+      <div class="ayuno-text">
+        <strong>Noche · Ayuno</strong>
+        Sin ingesta hasta el almuerzo del día siguiente
+      </div>
+    </div>
+
+    <div class="tip-bar">
+      <div class="tip-icon">💪</div>
+      <div class="tip-text"><strong>Día de gimnasio:</strong> Si entrenas después de la comida de las 17h, toma algo de proteína extra (huevo cocido, frutos secos) antes o después.</div>
+    </div>
+  </div>
+
+  <!-- JUEVES -->
+  <div class="day-card" id="day-jue">
+    <div class="day-header">
+      <span class="day-name">Jueves</span>
+      <span class="day-type">Jornada laboral · Ayuno nocturno</span>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-almuerzo"></div>
+        <div>
+          <div class="meal-time">~10:00h · Almuerzo</div>
+          <div class="meal-label">Jamón, queso curado y frutos secos</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Lonchas de jamón serrano, trozos de queso curado, nueces, almendras y manzana o pera</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-grasa">Grasa buena</span>
+          · Almuerzo rápido y portable · Sin cocinar, ideal para días con poco tiempo
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-comida"></div>
+        <div>
+          <div class="meal-time">~17:00h · Comida</div>
+          <div class="meal-label">Estofado de ternera o cerdo con verduras</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Guiso lento: morcillo o costilla con zanahoria, nabo, puerro y apio. Opción: añadir patata pequeña.</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-carb">Opcional · Patata</span>
+          · Cocinado el día antes o en olla lenta · Nutritivo y saciante
+        </div>
+      </div>
+    </div>
+
+    <div class="ayuno-block">
+      <div class="ayuno-icon">🌙</div>
+      <div class="ayuno-text">
+        <strong>Noche · Ayuno</strong>
+        Sin ingesta hasta el almuerzo del día siguiente
+      </div>
+    </div>
+  </div>
+
+  <!-- VIERNES -->
+  <div class="day-card" id="day-vie">
+    <div class="day-header">
+      <span class="day-name">Viernes</span>
+      <span class="day-type">Jornada laboral · Cena opcional ligera</span>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-almuerzo"></div>
+        <div>
+          <div class="meal-time">~10:00h · Almuerzo</div>
+          <div class="meal-label">Huevos duros con atún y verdura cruda</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">2-3 huevos cocidos + lata de atún + pepino, zanahoria y pimiento crudo en tiras</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          · Simple, rápido y muy completo · Aliña con AOVE y sal marina
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-comida"></div>
+        <div>
+          <div class="meal-time">~17:00h · Comida</div>
+          <div class="meal-label">Pollo al ajillo con arroz integral o sin</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Contramuslos de pollo al ajillo con vino blanco, acompañado de arroz integral si el cuerpo lo pide</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-carb">Carb · Opcional</span>
+          · Viernes: más permisivo con el arroz o una patata · Fin de semana a la vista
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-cena"></div>
+        <div>
+          <div class="meal-time">Noche · Cena ligera (opcional)</div>
+          <div class="meal-label">Tabla ligera o caldo</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Si hay plan: tabla de embutido, queso y aceitunas · Si no: caldo de huesos caliente</div>
+        <div class="meal-detail">
+          Sin presión · Si sales con gente, disfruta sin obsesionarte
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SÁBADO -->
+  <div class="day-card" id="day-sab">
+    <div class="day-header">
+      <span class="day-name">Sábado</span>
+      <span class="day-type">Descanso · Desayuno ligero + 2 ingestas</span>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-almuerzo"></div>
+        <div>
+          <div class="meal-time">~9-10h · Desayuno ligero</div>
+          <div class="meal-label">Café + fruta + frutos secos</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Café solo o con leche entera, fruta fresca de temporada (plátano, kiwi, naranja) y un puñado de nueces o almendras</div>
+        <div class="meal-detail">
+          <span class="tag tag-grasa">Grasa buena</span>
+          · Desayuno sin prisa · Si tienes más hambre, añade un huevo duro
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-comida"></div>
+        <div>
+          <div class="meal-time">~13-14h · Comida principal</div>
+          <div class="meal-label">Pescado azul a la plancha con quinoa</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Caballa, jurel o sardinas frescas a la plancha. Quinoa con limón y perejil. Ensalada verde grande.</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-carb">Quinoa</span>
+          <span class="tag tag-grasa">Omega-3</span>
+          · Sábado: más tiempo para cocinar bien y disfrutar
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-cena"></div>
+        <div>
+          <div class="meal-time">Noche · Cena social o ligera</div>
+          <div class="meal-label">Libre con criterio</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Si sales: disfruta. Si en casa: huevos fritos con verduras o tabla de jamón y queso</div>
+        <div class="meal-detail">
+          Sábado es sábado · Sin culpa · La semana ya está hecha
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOMINGO -->
+  <div class="day-card" id="day-dom">
+    <div class="day-header">
+      <span class="day-name">Domingo</span>
+      <span class="day-type">Descanso · Preparación semana</span>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-almuerzo"></div>
+        <div>
+          <div class="meal-time">~10-11h · Desayuno</div>
+          <div class="meal-label">Huevos revueltos con aguacate y salmón ahumado</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">3 huevos revueltos lentos con mantequilla, salmón ahumado y aguacate. Sin prisa.</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-grasa">Grasa buena</span>
+          · El desayuno del domingo merece tiempo · Café de calidad
+        </div>
+      </div>
+    </div>
+
+    <div class="meal-block">
+      <div class="meal-header">
+        <div class="meal-stripe stripe-comida"></div>
+        <div>
+          <div class="meal-time">~14h · Comida familiar</div>
+          <div class="meal-label">Asado de carne con patatas al horno</div>
+        </div>
+      </div>
+      <div class="meal-body">
+        <div class="meal-main">Pierna o costillas de cordero / cerdo al horno lento con patatas, romero y ajo. Ensalada de primero.</div>
+        <div class="meal-detail">
+          <span class="tag tag-prot">Proteína</span>
+          <span class="tag tag-carb">Patata</span>
+          · Domingo: comida social y nutritiva · El carbohidrato de la semana bien puesto
+        </div>
+      </div>
+    </div>
+
+    <div class="ayuno-block">
+      <div class="ayuno-icon">🌙</div>
+      <div class="ayuno-text">
+        <strong>Noche · Ayuno</strong>
+        Vuelta al ayuno nocturno para empezar bien el lunes
+      </div>
+    </div>
+
+    <div class="tip-bar">
+      <div class="tip-icon">🥡</div>
+      <div class="tip-text"><strong>Batch cooking dominical:</strong> Aprovecha para cocer huevos duros, preparar pollo en bandeja y tener frutos secos listos. Los tuppers de lunes a miércoles te los montas en 20 min.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Proteínas · Grasas · Vegetales · Frutas · Carbs de calidad con moderación<br>
+  Alimentación evolutiva adaptada a trabajo físico intenso · Horario brigada de reg
+</footer>
+
+<script>
+  function showDay(id, btn) {
+    document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('day-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
